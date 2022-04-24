@@ -11,8 +11,8 @@ black, green, light_green, brown, white = (0, 0, 0), (0, 100, 0), (0, 145, 0), (
 betuk = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 feher_babu_nevek = ['Bástya', 'Futó', 'Huszár', 'Király', 'Vezér', 'Huszár', 'Futó', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
 fekete_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Futó', 'Huszár', 'Király', 'Vezér', 'Huszár', 'Futó', 'Bástya']
-feher_babuk = []
-fekete_babuk = []
+
+feher_babuk, fekete_babuk = [], []
 
 pygame.display.set_caption("Sakk")
 WIDTH, HEIGHT = 1920, 1010
@@ -25,7 +25,7 @@ for col in range(8):
         text_position.append((CENTERX / 1.75 + row * (HEIGHT/10), CENTERY / 4 + col * (HEIGHT/10)))
         sizes.append((CENTERX / 1.75 + row * (HEIGHT/10), CENTERY / 4 + col * (HEIGHT/10), (HEIGHT/10), (HEIGHT/10)))
 
-map = [
+map_colors = [
     [white, brown, white, brown, white, brown, white, brown],
     [brown, white, brown, white, brown, white, brown, white],
     [white, brown, white, brown, white, brown, white, brown],
@@ -42,45 +42,76 @@ uj_jatek_text_hover = font.render("Új játék", True, white)
 textRect_uj_jatek = uj_jatek_text.get_rect()
 uj_jatek_keret = pygame.draw.rect(WIN, black, ((CENTERX / 4), CENTERY, 150, 55))
 
+turn = 'white'
+lephet = ['', []]
 FPS = 60
 
 
 ##################################################################################################################################################################################################################
 
 
-class Mezo():
-    def __init__(self, id, lephet, color, size, frame, has_child=False, text_position=None):
+class Mezo:
+    def __init__(self, id, color, size, frame, text_position, has_child):
         self.id = id
-        self.lephet = lephet
         self.color = color
         self.size = size
         self.frame = frame
-        self.has_child = has_child
-
-        font = pygame.font.Font('freesansbold.ttf', 20)
         self.text = font.render(self.id, True, black)
         self.t_pos = text_position
+        self.has_child = has_child
 
     def build(self, terulet, hover_keret, hover_color):
-        pygame.draw.rect(WIN, self.color, self.size, self.frame)
-        WIN.blit(self.text, self.t_pos)
-        if terulet.collidepoint(pygame.mouse.get_pos()) and self.has_child or self.lephet:
+        global lephet
+
+        if self.id in lephet[1]:
             pygame.draw.rect(WIN, hover_color, self.size, hover_keret)
             WIN.blit(self.text, self.t_pos)
+            if terulet.collidepoint(pygame.mouse.get_pos()):
+                if pygame.mouse.get_pressed()[0]:
+                    time.sleep(0.1)
+                    self.on_click()
+        else:
+            pygame.draw.rect(WIN, self.color, self.size, hover_keret)
+            WIN.blit(self.text, self.t_pos)
+
+    def on_click(self):
+        global lephet, turn
+        if turn == "white":
+            for elem in feher_babuk:
+                if elem.id == lephet[0]:
+                    babu, turn = elem, 'black'
+                    break
+        else:
+            for elem in fekete_babuk:
+                if elem.id == lephet[0]:
+                    babu, turn = elem, 'white'
+                    break
+        index = betuk.index(self.id[0])
+        babu.id, babu.position, lephet = self.id, sizes[index * 8 + int(self.id[1]) - 1], ['', []]
+        babu.terulet, babu.text = pygame.draw.rect(WIN, babu.color, babu.position), font.render(babu.id, True, black)
 
 
-class Babu():
+class Babu:
     def __init__(self, id, color, type, position):
         self.id = id
         self.color = color
         self.type = type
         self.position = position
         self.img = pygame.image.load('Images/' + self.color + '/' + self.type + '.png')
+        self.text = font.render(self.id, True, black)
+        self.terulet = pygame.draw.rect(WIN, self.color, self.position)
 
-    def build(self):
+    def build(self, hover_keret, hover_color, size):
+        if self.terulet.collidepoint(pygame.mouse.get_pos()) and turn == self.color:
+            pygame.draw.rect(WIN, hover_color, size, hover_keret)
+            WIN.blit(self.text, self.position)
+            if pygame.mouse.get_pressed()[0]:
+                time.sleep(0.3)
+                self.on_click()
         WIN.blit(self.img, self.position)
 
     def on_click(self):
+        lephet.clear()
         if self.type == "Gyalog":
             self.gyalog()
         if self.type == "Bástya":
@@ -95,22 +126,121 @@ class Babu():
             self.kiraly()
 
     def gyalog(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        if self.color == "white":
+            if y == 1:
+                lephet[1].append(betuk[y + 2] + str(x))
+            for babu in fekete_babuk:
+                if babu.id == betuk[y + 1] + str(x + 1):
+                    lephet[1].append(betuk[y + 1] + str(x + 1))
+                if babu.id == betuk[y + 1] + str(x - 1):
+                    lephet[1].append(betuk[y + 1] + str(x - 1))
+            lephet[1].append(betuk[y + 1] + str(x))
+        else:
+            if y == 6:
+                lephet[1].append(betuk[y - 2] + str(x))
+            for babu in feher_babuk:
+                if babu.id == betuk[y - 1] + str(x + 1):
+                    lephet[1].append(betuk[y - 1] + str(x + 1))
+                if babu.id == betuk[y - 1] + str(x - 1):
+                    lephet[1].append(betuk[y - 1] + str(x - 1))
+            lephet[1].append(betuk[y - 1] + str(x))
+        lephet[0] = self.id
 
     def bastya(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), self.id[1], ['', []]
+        for index in range(8):
+            lephet[1].append(betuk[index] + x)
+            lephet[1].append(betuk[y] + str(index + 1))
+        lephet[1].remove(self.id)
+        lephet[1].remove(self.id)
+        lephet[0] = self.id
 
     def futo(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        for index in range(8):
+            if 8 > y + index > -1:
+                if 9 > (x + index) > 0:
+                    lephet[1].append(betuk[y + index] + str(x + index))
+                if 9 > (x - index) > 0:
+                    lephet[1].append(betuk[y + index] + str(x - index))
+            if 8 > y - index > -1:
+                if 9 > (x + index) > 0:
+                    lephet[1].append(betuk[y - index] + str(x + index))
+                if 9 > (x - index) > 0:
+                    lephet[1].append(betuk[y - index] + str(x - index))
+            if self.id in lephet[1]:
+                lephet[1].remove(self.id)
+        lephet[0] = self.id
 
     def huszar(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        if 8 > y + 2 > -1:
+            if 9 > x + 1 > 0:
+                lephet[1].append(betuk[y + 2] + str(x + 1))
+            if 9 > x - 1 > 0:
+                lephet[1].append(betuk[y + 2] + str(x - 1))
+        if 8 > y - 2 > -1:
+            if 9 > x + 1 > 0:
+                lephet[1].append(betuk[y - 2] + str(x + 1))
+            if 9 > x - 1 > 0:
+                lephet[1].append(betuk[y - 2] + str(x - 1))
+        if 8 > y + 1 > -1:
+            if 9 > x + 2 > 0:
+                lephet[1].append(betuk[y + 1] + str(x + 2))
+            if 9 > x - 2 > 0:
+                lephet[1].append(betuk[y + 1] + str(x - 2))
+        if 8 > y - 1 > -1:
+            if 9 > x + 2 > 0:
+                lephet[1].append(betuk[y - 1] + str(x + 2))
+            if 9 > x - 2 > 0:
+                lephet[1].append(betuk[y - 1] + str(x - 2))
+        lephet[0] = self.id
 
     def vezer(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        for index in range(8):
+            if 8 > y + index > -1:
+                if 9 > (x + index) > 0:
+                    lephet[1].append(betuk[y + index] + str(x + index))
+                if 9 > (x - index) > 0:
+                    lephet[1].append(betuk[y + index] + str(x - index))
+            if 8 > y - index > -1:
+                if 9 > (x + index) > 0:
+                    lephet[1].append(betuk[y - index] + str(x + index))
+                if 9 > (x - index) > 0:
+                    lephet[1].append(betuk[y - index] + str(x - index))
+            lephet[1].append(betuk[index] + str(x))
+            lephet[1].append(betuk[y] + str(index + 1))
+            if self.id in lephet[1]:
+                lephet[1].remove(self.id)
+        lephet[0] = self.id
 
     def kiraly(self):
-        pass
+        global lephet
+        y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        if 8 > y + 1 > -1:
+            if 9 > x + 1 > 0:
+                lephet[1].append(betuk[y + 1] + str(x + 1))
+            if 9 > x - 1 > 0:
+                lephet[1].append(betuk[y + 1] + str(x - 1))
+            lephet[1].append(betuk[y + 1] + str(x))
+        if 8 > y - 1 > -1:
+            if 9 > x + 1 > 0:
+                lephet[1].append(betuk[y - 1] + str(x + 1))
+            if 9 > x - 1 > 0:
+                lephet[1].append(betuk[y - 1] + str(x - 1))
+            lephet[1].append(betuk[y - 1] + str(x))
+        if 9 > x + 1 > 0:
+            lephet[1].append(betuk[y] + str(x + 1))
+        if 9 > x - 1 > 0:
+            lephet[1].append(betuk[y] + str(x - 1))
+        lephet[0] = self.id
 
 
 class Button:
@@ -124,6 +254,7 @@ class Button:
         self.text = text
 
     def build(self, terulet, hover_keret, hover_text):
+        global lephet
         pygame.draw.rect(WIN, self.color, self.size, self.frame, self.br)
         self.textRect.center = self.t_pos
         pygame.draw.rect(WIN, black, self.size, 2, self.br)
@@ -135,30 +266,37 @@ class Button:
             if pygame.mouse.get_pressed()[0]:
                 time.sleep(0.1)
                 create_babuk()
+                lephet = ['', []]
+
 
 
 ##################################################################################################################################################################################################################
 
 
 def create_babuk():
+    fekete_babuk.clear()
+    feher_babuk.clear()
     for index in range(8):
-        feher_babuk.append(Babu(betuk[0] + str(index + 1), 'white', feher_babu_nevek[index], (CENTERX / 1.75 + index * (HEIGHT/10), CENTERY / 4 + 0 * (HEIGHT/10))))
-        feher_babuk.append(Babu(betuk[1] + str(index + 1), 'white', feher_babu_nevek[8 + index], (CENTERX / 1.75 + index * (HEIGHT/10), CENTERY / 4 + 1 * (HEIGHT/10))))
-        fekete_babuk.append(Babu(betuk[6] + str(index + 1), 'black', fekete_babu_nevek[index], (CENTERX / 1.75 + index * (HEIGHT / 10), CENTERY / 4 + 6 * (HEIGHT / 10))))
-        fekete_babuk.append(Babu(betuk[7] + str(index + 1), 'black', fekete_babu_nevek[8 + index], (CENTERX / 1.75 + index * (HEIGHT / 10), CENTERY / 4 + 7 * (HEIGHT / 10))))
+        feher_babuk.append(Babu(betuk[0] + str(index + 1), 'white', feher_babu_nevek[index], sizes[index]))
+        feher_babuk.append(Babu(betuk[1] + str(index + 1), 'white', feher_babu_nevek[8 + index], sizes[8 + index]))
+        fekete_babuk.append(Babu(betuk[6] + str(index + 1), 'black', fekete_babu_nevek[index], sizes[6 * 8 + index]))
+        fekete_babuk.append(Babu(betuk[7] + str(index + 1), 'black', fekete_babu_nevek[8 + index], sizes[7 * 8 + index]))
 
 
 def tabla():
     for col in range(8):
         for row in range(8):
-            has_child = False
-            color = map[col][row]
+            has_child, color, id = False, map_colors[col][row], betuk[col] + str(row + 1)
 
-            for elem_1, elem_2 in zip(feher_babuk, fekete_babuk):
-                if elem_1.id == betuk[col] + str(row + 1) or elem_2.id == betuk[col] + str(row + 1):
-                    has_child = True
+            for index in range(16):
+                try:
+                    if fekete_babuk[index].id == betuk[col] + str(row + 1) or feher_babuk[index].id == betuk[col] + str(row + 1):
+                        has_child = True
+                        break
+                except:
+                    pass
 
-            mezo, keret = Mezo(betuk[col] + str(row + 1), None, color, sizes[col * 8 + row], True, has_child, text_position[col * 8 + row]), pygame.draw.rect(WIN, color, sizes[col * 8 + row])
+            mezo, keret = (Mezo(id, color, sizes[col * 8 + row], True, text_position[col * 8 + row], has_child)), pygame.draw.rect(WIN, color, sizes[col * 8 + row])
             mezo.build(keret, False, light_green)
 
 
@@ -169,9 +307,10 @@ def draw():
     uj_jatek_gomb = Button(light_green, (CENTERX / 4, CENTERY, 150, 55), False, 10, textRect_uj_jatek, (CENTERX / 3.5, CENTERY * 1.02), uj_jatek_text)
     uj_jatek_gomb.build(uj_jatek_keret, False, uj_jatek_text_hover)
 
-    for elem_1, elem_2 in zip(feher_babuk, fekete_babuk):
-        elem_1.build()
-        elem_2.build()
+    for babu in fekete_babuk:
+        babu.build(False, light_green, sizes[betuk.index(babu.id[0]) * 8 + int(babu.id[1]) - 1])
+    for babu in feher_babuk:
+        babu.build(False, light_green, sizes[betuk.index(babu.id[0]) * 8 + int(babu.id[1]) - 1])
 
     pygame.display.update()
 
@@ -180,6 +319,7 @@ def main():
 
     clock = pygame.time.Clock()
     run = True
+    create_babuk()
 
     while run:
         draw()
@@ -190,8 +330,4 @@ def main():
                 pygame.quit()
 
 
-##################################################################################################################################################################################################################
-
-
-create_babuk()
 main()
