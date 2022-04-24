@@ -9,9 +9,10 @@ pygame.init()
 black, green, light_green, brown, white = (0, 0, 0), (0, 100, 0), (0, 145, 0), (165, 42, 42), (245, 222, 179)
 
 betuk = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-feher_babu_nevek = ['Bástya', 'Futó', 'Huszár', 'Király', 'Vezér', 'Huszár', 'Futó', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
-fekete_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Futó', 'Huszár', 'Király', 'Vezér', 'Huszár', 'Futó', 'Bástya']
-
+feher_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya']
+fekete_babu_nevek = ['Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
+feher_idk = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8']
+fekete_idk = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8']
 feher_babuk, fekete_babuk = [], []
 
 pygame.display.set_caption("Sakk")
@@ -51,14 +52,13 @@ FPS = 60
 
 
 class Mezo:
-    def __init__(self, id, color, size, frame, text_position, has_child):
+    def __init__(self, id, color, size, frame, text_position):
         self.id = id
         self.color = color
         self.size = size
         self.frame = frame
         self.text = font.render(self.id, True, black)
         self.t_pos = text_position
-        self.has_child = has_child
 
     def build(self, terulet, hover_keret, hover_color):
         global lephet
@@ -128,24 +128,26 @@ class Babu:
     def gyalog(self):
         global lephet
         y, x, lephet = betuk.index(self.id[0]), int(self.id[1]), ['', []]
+        egyik = van_ellenfel(self.color)
+        masik = van_azonos_szinu(self.color)
         if self.color == "white":
-            if y == 1:
-                lephet[1].append(betuk[y + 2] + str(x))
-            for babu in fekete_babuk:
-                if babu.id == betuk[y + 1] + str(x + 1):
-                    lephet[1].append(betuk[y + 1] + str(x + 1))
-                if babu.id == betuk[y + 1] + str(x - 1):
-                    lephet[1].append(betuk[y + 1] + str(x - 1))
-            lephet[1].append(betuk[y + 1] + str(x))
-        else:
-            if y == 6:
+            if y == 6 and not (betuk[y - 2] + str(x) in egyik or betuk[y - 2] + str(x) in masik):
                 lephet[1].append(betuk[y - 2] + str(x))
-            for babu in feher_babuk:
+            for babu in fekete_babuk:
                 if babu.id == betuk[y - 1] + str(x + 1):
                     lephet[1].append(betuk[y - 1] + str(x + 1))
                 if babu.id == betuk[y - 1] + str(x - 1):
                     lephet[1].append(betuk[y - 1] + str(x - 1))
             lephet[1].append(betuk[y - 1] + str(x))
+        else:
+            if y == 1:
+                lephet[1].append(betuk[y + 2] + str(x))
+            for babu in feher_babuk:
+                if babu.id == betuk[y + 1] + str(x + 1):
+                    lephet[1].append(betuk[y + 1] + str(x + 1))
+                if babu.id == betuk[y + 1] + str(x - 1):
+                    lephet[1].append(betuk[y + 1] + str(x - 1))
+            lephet[1].append(betuk[y + 1] + str(x))
         lephet[0] = self.id
 
     def bastya(self):
@@ -273,30 +275,42 @@ class Button:
 ##################################################################################################################################################################################################################
 
 
+def van_ellenfel(szin):
+    ids = []
+    if szin == 'white':
+        ellenfel_lista = fekete_babuk
+    else:
+        ellenfel_lista = feher_babuk
+    for babu in ellenfel_lista:
+        ids.append(babu.id)
+    return ids
+
+
+def van_azonos_szinu(szin):
+    ids = []
+    if szin == 'white':
+        ellenfel_lista = feher_babuk
+    else:
+        ellenfel_lista = fekete_babuk
+    for babu in ellenfel_lista:
+        ids.append(babu.id)
+    return ids
+
+
 def create_babuk():
     fekete_babuk.clear()
     feher_babuk.clear()
     for index in range(8):
-        feher_babuk.append(Babu(betuk[0] + str(index + 1), 'white', feher_babu_nevek[index], sizes[index]))
-        feher_babuk.append(Babu(betuk[1] + str(index + 1), 'white', feher_babu_nevek[8 + index], sizes[8 + index]))
-        fekete_babuk.append(Babu(betuk[6] + str(index + 1), 'black', fekete_babu_nevek[index], sizes[6 * 8 + index]))
-        fekete_babuk.append(Babu(betuk[7] + str(index + 1), 'black', fekete_babu_nevek[8 + index], sizes[7 * 8 + index]))
+        feher_babuk.append(Babu(feher_idk[index], 'white', feher_babu_nevek[index], sizes[6 * 8 + index]))
+        feher_babuk.append(Babu(feher_idk[8 + index], 'white', feher_babu_nevek[8 + index], sizes[7 * 8 + index]))
+        fekete_babuk.append(Babu(fekete_idk[index], 'black', fekete_babu_nevek[index], sizes[index]))
+        fekete_babuk.append(Babu(fekete_idk[8 + index], 'black', fekete_babu_nevek[8 + index], sizes[8 + index]))
 
 
 def tabla():
     for col in range(8):
         for row in range(8):
-            has_child, color, id = False, map_colors[col][row], betuk[col] + str(row + 1)
-
-            for index in range(16):
-                try:
-                    if fekete_babuk[index].id == betuk[col] + str(row + 1) or feher_babuk[index].id == betuk[col] + str(row + 1):
-                        has_child = True
-                        break
-                except:
-                    pass
-
-            mezo, keret = (Mezo(id, color, sizes[col * 8 + row], True, text_position[col * 8 + row], has_child)), pygame.draw.rect(WIN, color, sizes[col * 8 + row])
+            mezo, keret = (Mezo(betuk[col] + str(row + 1), map_colors[col][row], sizes[col * 8 + row], True, text_position[col * 8 + row])), pygame.draw.rect(WIN, map_colors[col][row], sizes[col * 8 + row])
             mezo.build(keret, False, light_green)
 
 
