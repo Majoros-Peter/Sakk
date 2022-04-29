@@ -11,8 +11,10 @@ black, green, light_green, brown, white, red = (0, 0, 0), (0, 100, 0), (0, 145, 
 betuk = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 fekete_babu_nevek = ['Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
 feher_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya']
-fekete_idk = ['a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8', 'a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7']
-feher_idk = ['a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2', 'a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1']
+#fekete_babu_nevek = ['Gyalog' for _ in range(16)]
+#feher_babu_nevek = ['Gyalog' for _ in range(16)]
+fekete_idk = [betuk[betu]+str(8-index) for index in range(2) for betu in range(8)]
+feher_idk = [betuk[betu]+str(2-index) for index in range(2) for betu in range(8)]
 feher_babuk, fekete_babuk = [], []
 
 pygame.display.set_caption("Sakk")
@@ -58,24 +60,25 @@ class Mezo:
 
     def build(self, child=None):
         self.child = child
-
         if self.id in ellenseg:
             pygame.draw.rect(WIN, red, self.size, False)
-            WIN.blit(self.text, self.t_pos)
+            pygame.draw.rect(WIN, black, self.size, 1)
             if self.terulet.collidepoint(pygame.mouse.get_pos()):
                 if pygame.mouse.get_pressed()[0]:
                     time.sleep(0.1)
                     self.on_click(True)
+
         elif self.id in lephet[1]:
             pygame.draw.rect(WIN, light_green, self.size, False)
-            WIN.blit(self.text, self.t_pos)
+            pygame.draw.rect(WIN, black, self.size, 1)
             if self.terulet.collidepoint(pygame.mouse.get_pos()):
                 if pygame.mouse.get_pressed()[0]:
                     time.sleep(0.1)
                     self.on_click()
+
         else:
             pygame.draw.rect(WIN, self.color, self.size, False)
-            WIN.blit(self.text, self.t_pos)
+        WIN.blit(self.text, self.t_pos)
 
     def on_click(self, remove_piece=False):
         global lephet, turn, ellenseg
@@ -139,101 +142,99 @@ class Babu:
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
         if self.color == 'white':
-            if self.id.endswith('2'):
-                test_1([x, y+2])
-            test_1([x-1, y+1])
-            test_1([x+1, y+1])
-            test_1([x, y+1])
+            if not test([x, y+1], False) and self.id.endswith('2'):
+                test([x, y+2], False)
+            test([x-1, y+1], True)
+            test([x+1, y+1], True)
         else:
-            if self.id.endswith('7'):
-                test_1([x, y-2])
-            test_1([x-1, y-1])
-            test_1([x+1, y-1])
-            test_1([x, y-1])
-        lephet[1] = test_2(lephet)
+            if not test([x, y-1], False) and self.id.endswith('7'):
+                test([x, y-2], False)
+            test([x-1, y-1], True)
+            test([x+1, y-1], True)
 
     def bastya(self):
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
         for index in range(1, 8):
-            if test_1([x + index, y]):
+            if test([x+index, y]):
                 break
         for index in range(1, 8):
-            if test_1([x - index, y]):
+            if test([x-index, y]):
                 break
         for index in range(1, 8):
-            if test_1([x, y - index]):
+            if test([x, y-index]):
                 break
         for index in range(1, 8):
-            if test_1([x, y + index]):
+            if test([x, y+index]):
                 break
-        lephet[1] = test_2(lephet)
 
     def futo(self):
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
         for index in range(1, 8):
-            if test_1([x + index, y + index]):
+            if test([x+index, y+index]):
                 break
         for index in range(1, 8):
-            if test_1([x + index, y - index]):
+            if test([x+index, y-index]):
                 break
         for index in range(1, 8):
-            if test_1([x - index, y + index]):
+            if test([x-index, y+index]):
                 break
         for index in range(1, 8):
-            if test_1([x - index, y - index]):
+            if test([x-index, y-index]):
                 break
-        lephet[1] = test_2(lephet)
 
     def huszar(self):
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
-        test_1([x + 2, y + 1])
-        test_1([x + 2, y - 1])
-        test_1([x - 2, y + 1])
-        test_1([x - 2, y - 1])
-        test_1([x + 1, y + 2])
-        test_1([x + 1, y - 2])
-        test_1([x - 1, y + 2])
-        test_1([x - 1, y - 2])
-        lephet[1] = test_2(lephet)
+        test([x+2, y+1])
+        test([x+2, y-1])
+        test([x-2, y+1])
+        test([x-2, y-1])
+        test([x+1, y+2])
+        test([x+1, y-2])
+        test([x-1, y+2])
+        test([x-1, y-2])
 
     def vezer(self):
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
-        for index in range(8):
-            if test_1([x + index, y + index]):
+        for index in range(1, 8):
+            if test([x+index, y+index]):
                 break
-        for index in range(8):
-            if test_1([x + index, y - index]):
+        for index in range(1, 8):
+            if test([x+index, y-index]):
                 break
-        for index in range(8):
-            if test_1([x - index, y + index]):
+        for index in range(1, 8):
+            if test([x-index, y+index]):
                 break
-        for index in range(8):
-            if test_1([x - index, y - index]):
+        for index in range(1, 8):
+            if test([x-index, y-index]):
                 break
-        for index in range(8):
-            if test_1([index, y]):
+        for index in range(1, 8):
+            if test([x-index, y]):
                 break
-        for index in range(8):
-            if test_1([x, index + 1]):
+        for index in range(1, 8):
+            if test([x+index, y]):
                 break
-        lephet[1] = test_2(lephet)
+        for index in range(1, 8):
+            if test([x, y-index]):
+                break
+        for index in range(1, 8):
+            if test([x, y+index]):
+                break
 
     def kiraly(self):
         global lephet, ellenseg
         x, y, lephet, ellenseg = betuk.index(self.id[0]), int(self.id[1]), [self.id, []], []
-        test_1([x + 1, y + 1])
-        test_1([x + 1, y - 1])
-        test_1([x + 1, y])
-        test_1([x - 1, y + 1])
-        test_1([x - 1, y - 1])
-        test_1([x - 1, y])
-        test_1([x, y + 1])
-        test_1([x, y - 1])
-        lephet[1] = test_2(lephet)
+        test([x + 1, y + 1])
+        test([x + 1, y - 1])
+        test([x + 1, y])
+        test([x - 1, y + 1])
+        test([x - 1, y - 1])
+        test([x - 1, y])
+        test([x, y + 1])
+        test([x, y - 1])
 
 
 class Button:
@@ -247,7 +248,7 @@ class Button:
         self.text = text
 
     def build(self, terulet, hover_keret, hover_text):
-        global lephet, turn
+        global lephet, ellenseg, turn
         pygame.draw.rect(WIN, self.color, self.size, self.frame, self.br)
         pygame.draw.rect(WIN, black, self.size, 2, self.br)
         WIN.blit(self.text, self.t_pos)
@@ -258,35 +259,29 @@ class Button:
             if pygame.mouse.get_pressed()[0]:
                 time.sleep(0.1)
                 create_babuk()
-                lephet, turn = ['', []], 'white'
+                lephet, elenseg, turn = ['', []], [], 'white'
 
 
 ##################################################################################################################################################################################################################
 uj_jatek_gomb = Button(light_green, (CENTERX / 4, CENTERY, 150, 55), False, 10, textRect_uj_jatek, (CENTERX / 3.5, CENTERY * 1.02), uj_jatek_text)
 
 
-def test_1(id):
-    global lephet
+def test(id, gyalog=None):
+    global lephet, ellenseg
     if 8 > id[0] > -1 and 0 < id[1] < 9:
+        id = betuk[id[0]] + str(id[1])
         for mezo in mezok:
-            if mezo.id == betuk[id[0]] + str(id[1]):
-                if mezo.child == None:
-                    lephet[1].append(betuk[id[0]] + str(id[1]))
+            if mezo.id == id:
+                if gyalog and mezo.child != None and mezo.child != turn:
+                    lephet[1].append(id)
+                    ellenseg.append(id)
+                elif not gyalog and mezo.child == None:
+                    lephet[1].append(id)
                     return False
-                elif mezo.child != turn:
-                    lephet[1].append(betuk[id[0]] + str(id[1]))
-                    ellenseg.append(betuk[id[0]] + str(id[1]))
+                elif gyalog == None and mezo.child != turn:
+                    lephet[1].append(id)
+                    ellenseg.append(id)
                 return True
-
-
-def test_2(lista):
-    for id in lista[1]:
-        if id == lista[0]:
-            lista[1].remove(id)
-    for mezo in mezok:
-        if mezo.id in lista[1] and mezo.child == turn:
-            lista[1].remove(mezo.id)
-    return lista[1]
 
 
 def child(col, row):
