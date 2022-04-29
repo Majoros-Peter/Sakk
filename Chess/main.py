@@ -37,10 +37,18 @@ font = pygame.font.Font('freesansbold.ttf', 20)
 uj_jatek_text = font.render("Új játék", True, black)
 uj_jatek_text_hover = font.render("Új játék", True, white)
 textRect_uj_jatek = uj_jatek_text.get_rect()
-uj_jatek_keret = pygame.draw.rect(WIN, black, ((CENTERX / 4), CENTERY, 150, 55))
+uj_jatek_keret = pygame.draw.rect(WIN, black, (CENTERX/4, CENTERY, 150, 55))
+
+font = pygame.font.Font('freesansbold.ttf', 30)
+nyertes_text = font.render("Visszavágó?", True, black)
+nyertes_text_hover = font.render("Visszavágó?", True, white)
+textRect_nyertes = uj_jatek_text.get_rect()
+v = textRect_nyertes.center
+nyertes_keret = pygame.draw.rect(WIN, black, (CENTERX/1.2, CENTERY, 300, 100))
+font = pygame.font.Font('freesansbold.ttf', 20)
 
 lephet, ellenseg = ['', []], []
-turn = 'white'
+turn, nyertes = 'white', None
 FPS = 60
 
 
@@ -79,12 +87,15 @@ class Mezo:
         WIN.blit(self.text, self.t_pos)
 
     def on_click(self, remove_piece=False):
-        global lephet, turn, ellenseg
+        global lephet, turn, ellenseg, nyertes
         if turn == "white":
             if remove_piece:
                 for babu in fekete_babuk:
                     if babu.id == self.id:
+                        if babu.type == 'Király':
+                            nyertes = 'fehér'
                         fekete_babuk.remove(babu)
+                        break
             for babu in feher_babuk:
                 if babu.id == lephet[0]:
                     turn = 'black'
@@ -93,7 +104,10 @@ class Mezo:
             if remove_piece:
                 for babu in feher_babuk:
                     if babu.id == self.id:
+                        if babu.type == 'Király':
+                            nyertes = 'fekete'
                         feher_babuk.remove(babu)
+                        break
             for babu in fekete_babuk:
                 if babu.id == lephet[0]:
                     turn = 'white'
@@ -246,7 +260,7 @@ class Button:
         self.text = text
 
     def build(self, terulet, hover_keret, hover_text):
-        global lephet, ellenseg, turn
+        global lephet, ellenseg, turn, nyertes
         pygame.draw.rect(WIN, self.color, self.size, self.frame, self.br)
         pygame.draw.rect(WIN, black, self.size, 2, self.br)
         WIN.blit(self.text, self.t_pos)
@@ -257,11 +271,12 @@ class Button:
             if pygame.mouse.get_pressed()[0]:
                 time.sleep(0.1)
                 create_babuk()
-                lephet, elenseg, turn = ['', []], [], 'white'
+                lephet, elenseg, turn, nyertes = ['', []], [], 'white', None
 
 
 ##################################################################################################################################################################################################################
-uj_jatek_gomb = Button(light_green, (CENTERX / 4, CENTERY, 150, 55), False, 10, textRect_uj_jatek, (CENTERX / 3.5, CENTERY * 1.02), uj_jatek_text)
+uj_jatek_gomb = Button(light_green, (CENTERX/4, CENTERY, 150, 55), False, 10, textRect_uj_jatek, (CENTERX/3.5, CENTERY*1.02), uj_jatek_text)
+nyertes_gomb = Button(light_green, (CENTERX/1.2, CENTERY, 300, 100), False, 10, textRect_nyertes, (CENTERX/1.12, CENTERY/0.94), nyertes_text)
 
 
 def test(id, gyalog=None):
@@ -316,6 +331,7 @@ def tabla(first=False):
 
 def draw():
     WIN.fill(green)
+
     tabla()
 
     for babu in fekete_babuk:
@@ -323,8 +339,22 @@ def draw():
     for babu in feher_babuk:
         babu.build(sizes[map_ids.index(babu.id)])
 
-
     uj_jatek_gomb.build(uj_jatek_keret, False, uj_jatek_text_hover)
+
+    pygame.display.update()
+
+
+def game_end():
+
+    WIN.fill(green)
+
+    pygame.draw.rect(WIN, white, (CENTERX/1.5, CENTERY/1.5, 600, 400), False, 10)
+    pygame.draw.rect(WIN, black, (CENTERX/1.5, CENTERY/1.5, 600, 400), 5, 10)
+    font = pygame.font.Font('freesansbold.ttf', 40)
+    WIN.blit(font.render(f"Gratulálok {nyertes}, nyertél!", True, black), (CENTERX/1.37, CENTERY/1.37))
+
+    nyertes_gomb.build(nyertes_keret, False, nyertes_text_hover)
+
     pygame.display.update()
 
 
@@ -336,7 +366,10 @@ def main():
     tabla(True)
 
     while run:
-        draw()
+        if nyertes == None:
+            draw()
+        else:
+            game_end()
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
