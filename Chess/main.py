@@ -98,6 +98,8 @@ class Mezo:
                         break
             for babu in feher_babuk:
                 if babu.id == lephet[0]:
+                    if babu.type == 'Gyalog' and babu.id.endswith('7'):
+                        babu.type, babu.img = 'Vezér', pygame.image.load('Images/' + turn + '/' + 'Vezér' + '.png')
                     turn = 'black'
                     break
         else:
@@ -110,6 +112,8 @@ class Mezo:
                         break
             for babu in fekete_babuk:
                 if babu.id == lephet[0]:
+                    if babu.type == 'Gyalog' and babu.id.endswith('2'):
+                        babu.type, babu.img = 'Vezér', pygame.image.load('Images/' + turn + '/' + 'Vezér' + '.png')
                     turn = 'white'
                     break
         babu.id, babu.position, lephet, ellenseg = self.id, sizes[betuk.index(self.id[0]) + (8 - int(self.id[1])) * 8], ['', []], []
