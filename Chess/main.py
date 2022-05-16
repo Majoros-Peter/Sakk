@@ -9,8 +9,8 @@ pygame.init()
 black, green, light_green, brown, white, red = (0, 0, 0), (0, 100, 0), (0, 145, 0), (165, 42, 42), (245, 222, 179), (255, 69, 0)
 
 betuk = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-fekete_babu_nevek = ['Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
-feher_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Futó', 'Huszár', 'Vezér', 'Király', 'Huszár', 'Futó', 'Bástya']
+fekete_babu_nevek = ['Bástya', 'Huszár', 'Futó', 'Vezér', 'Király', 'Futó', 'Huszár', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
+feher_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Huszár', 'Futó', 'Vezér', 'Király', 'Futó', 'Huszár', 'Bástya']
 fekete_idk = [betuk[betu]+str(8-index) for index in range(2) for betu in range(8)]
 feher_idk = [betuk[betu]+str(2-index) for index in range(2) for betu in range(8)]
 feher_babuk, fekete_babuk = [], []
@@ -22,16 +22,14 @@ CENTERX, CENTERY = WIDTH / 2, HEIGHT / 2
 
 sizes, text_position, map_colors, map_ids, mezok = [], [], [], [], []
 for col in range(8):
-    szin_sor = []
     for row in range(8):
         text_position.append((CENTERX / 1.75 + row * (HEIGHT/10), CENTERY / 4 + col * (HEIGHT/10)))
         sizes.append((CENTERX / 1.75 + row * (HEIGHT/10), CENTERY / 4 + col * (HEIGHT/10), (HEIGHT/10), (HEIGHT/10)))
         map_ids.append(betuk[row] + str(8-col))
         if (col % 2 == 0 and row % 2 == 0) or (col % 2 == 1 and row % 2 == 1):
-            szin_sor.append(white)
+            map_colors.append(white)
         else:
-            szin_sor.append(brown)
-    map_colors.append(szin_sor)
+            map_colors.append(brown)
 
 font = pygame.font.Font('freesansbold.ttf', 20)
 uj_jatek_text = font.render("Új játék", True, black)
@@ -43,7 +41,6 @@ font = pygame.font.Font('freesansbold.ttf', 30)
 nyertes_text = font.render("Visszavágó?", True, black)
 nyertes_text_hover = font.render("Visszavágó?", True, white)
 textRect_nyertes = uj_jatek_text.get_rect()
-v = textRect_nyertes.center
 nyertes_keret = pygame.draw.rect(WIN, black, (CENTERX/1.2, CENTERY, 300, 100))
 font = pygame.font.Font('freesansbold.ttf', 20)
 
@@ -273,9 +270,8 @@ class Button:
             WIN.blit(hover_text, self.t_pos)
             pygame.draw.rect(WIN, black, self.size, 2, self.br)
             if pygame.mouse.get_pressed()[0]:
-                time.sleep(0.1)
-                create_babuk()
-                lephet, elenseg, turn, nyertes = ['', []], [], 'white', None
+                time.sleep(0.1), create_babuk(), ellenseg.clear()
+                lephet, turn, nyertes = ['', []], 'white', None
 
 
 ##################################################################################################################################################################################################################
@@ -301,20 +297,19 @@ def test(id, gyalog=None):
                 return True
 
 
-def child(col, row):
+def child(id):
     for babu in fekete_babuk:
-        if babu.id == map_ids[col * 8 + row]:
-            return babu.color
+        if babu.id == id:
+            return 'black'
 
     for babu in feher_babuk:
-        if babu.id == map_ids[col * 8 + row]:
-            return babu.color
+        if babu.id == id:
+            return 'white'
     return None
 
 
 def create_babuk():
-    fekete_babuk.clear()
-    feher_babuk.clear()
+    fekete_babuk.clear(), feher_babuk.clear()
     for index in range(8):
         feher_babuk.append(Babu(feher_idk[index], 'white', feher_babu_nevek[index], sizes[6 * 8 + index]))
         feher_babuk.append(Babu(feher_idk[8 + index], 'white', feher_babu_nevek[8 + index], sizes[7 * 8 + index]))
@@ -322,15 +317,15 @@ def create_babuk():
         fekete_babuk.append(Babu(fekete_idk[8 + index], 'black', fekete_babu_nevek[8 + index], sizes[8 + index]))
 
 
-def tabla(first=False):
+def tabla(start=False):
     for col in range(8):
         for row in range(8):
-            index = col * 8 + row
+            index = col*8+row
 
-            if first:
-                mezok.append((Mezo(map_ids[col * 8 + row], map_colors[col][row], sizes[index], text_position[index])))
+            if start:
+                mezok.append((Mezo(map_ids[index], map_colors[index], sizes[index], text_position[index])))
 
-            mezok[index].build(child(col, row))
+            mezok[index].build(child(map_ids[index]))
 
 
 def draw():
@@ -364,16 +359,11 @@ def game_end():
 
 def main():
 
-    clock = pygame.time.Clock()
-    run = True
-    create_babuk()
-    tabla(True)
+    clock, run = pygame.time.Clock(), True
+    create_babuk(), tabla(True)
 
     while run:
-        if nyertes == None:
-            draw()
-        else:
-            game_end()
+        draw() if nyertes == None else game_end()
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
