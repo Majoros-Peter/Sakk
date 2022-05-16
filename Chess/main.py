@@ -11,8 +11,8 @@ black, green, light_green, brown, white, red = (0, 0, 0), (0, 100, 0), (0, 145, 
 betuk = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 fekete_babu_nevek = ['Bástya', 'Huszár', 'Futó', 'Vezér', 'Király', 'Futó', 'Huszár', 'Bástya', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog']
 feher_babu_nevek = ['Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Gyalog', 'Bástya', 'Huszár', 'Futó', 'Vezér', 'Király', 'Futó', 'Huszár', 'Bástya']
-fekete_idk = [betuk[betu]+str(8-index) for index in range(2) for betu in range(8)]
-feher_idk = [betuk[betu]+str(2-index) for index in range(2) for betu in range(8)]
+fekete_idk = [betu+str(8-num) for num in range(2) for betu in betuk]
+feher_idk = [betu+str(2-num) for num in range(2) for betu in betuk]
 feher_babuk, fekete_babuk = [], []
 
 pygame.display.set_caption("Sakk")
